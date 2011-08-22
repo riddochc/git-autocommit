@@ -1,0 +1,77 @@
+Git-autocommit
+==============
+Chris Riddoch <riddochc@gmail.com>
+0.1, 2011-08-22
+
+== What is git-autocommit? ==
+
+This is a ruby script that watches a project for changes, such as when a file
+is changed in an editor and saved, and commits that change to the git
+repository containing that file.
+
+One could perhaps use a hook in your favorite text editor to run git commit
+whenever you save, but this is completely independent of what tools you use.
+Any changes, caused by any program, will be noticed and a commit made.
+
+== Dependencies ==
+
+The https://github.com/aredridel/ruby-inotify[inotify] library is required.
+This ties the use of git-autocommit to linux, but I'm sure it wouldn't be too
+much difficulty to support other OS's file notification systems, especially
+if gems already exist wrapping their interfaces.
+
+== Explanation and Usage ==
+
+I find myself not committing my work frequently enough - I tend to wait until
+a project is in at least a working state, often with a complete feature, before
+committing.  Granted, commits that _others_ see benefit from being as close
+to working as possible (to make things like +git bisect+ easier to work with),
+this can prevent me from getting the most benefit from using revision control
+in the first place.
+
+Here's my workflow: Before running autocommit, I make sure I'm working on a
+local topic branch:
+
+  git branch new_work
+
+This topic branch will never be seen by anyone else, it's never pushed to any
+public repository.  This is important, because later, I'll be modifying
+the history before making it public.  Now, I can run autocommit:
+
+   autocommit /path/to/worktree
+
+When I'm done with my work, I now have a _large_ number of commits that were
+made automatically for me while I wrote, saved, and tested my work.  I don't
+want to subject others to the minute details changed between saves, so I want
+to combine groups of commits together.  To learn how to do this, read the
+http://book.git-scm.com/4_interactive_rebasing.html[git book]'s section
+on interactive rebasing.
+
+== TODO ==
+
+Currently, this only watches for changes in existing files in the project.
+I haven't written the logic to watch directories for the creation of new
+files, so they won't be noticed without a restart of autocommit.
+
+Support for platforms other than linux is currently lacking.
+
+Is https://lwn.net/Articles/337495/[fsnotify] available, and more appropriate?
+
+== License ==
+
+Copyright © 2011 Chris Riddoch
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
