@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+require 'inotify'
+require 'find'
+require 'fileutils'
+
+include FileUtils
+
+i = Inotify.new
+
+work_tree = ARGV[0]
+
+t = Thread.new do
+  i.each_event do |ev|
+    puts "Event: " + ev.name
+    puts "Mask: " + ev.mask.to_s
+    file = ev.name
+    cd(work_tree) do
+      `git add .`
+      `git commit -m "Autocommit"`
+    end
+  end
+end
+
+Find.find(work_tree) do |e|
+  if ['.git'].include?(File.basename(e)) or !File.directory?(e)
+    Find.prune
+  else
+    begin
+      puts "Watching #{e}"
+      i.add_watch(e, Inotify::CLOSE_WRITE)
+    rescue
+      puts "Skipping event #{e}: #{$!}"
+    end
+  end
+end
+
+t.join
