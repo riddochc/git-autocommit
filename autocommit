@@ -17,39 +17,32 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-require 'inotify'
-require 'find'
+require 'directory_watcher'
 require 'fileutils'
-
+require 'find'
 include FileUtils
-
-i = Inotify.new
 
 work_tree = ARGV[0]
 
-t = Thread.new do
-  i.each_event do |ev|
-    puts "Event: " + ev.name
-    puts "Mask: " + ev.mask.to_s
-    file = ev.name
-    cd(work_tree) do
-      `git add .`
-      `git commit -m "Autocommit"`
-    end
-  end
-end
+dw = DirectoryWatcher.new work_tree, :glob => '**/*', :pre_load => true
+dw.interval = 2.0
+dw.stable = 2
 
-Find.find(work_tree) do |e|
-  if ['.git'].include?(File.basename(e)) or !File.directory?(e)
-    Find.prune
-  else
-    begin
-      puts "Watching #{e}"
-      i.add_watch(e, Inotify::CLOSE_WRITE)
-    rescue
-      puts "Skipping event #{e}: #{$!}"
-    end
-  end
-end
+dw.add_observer {|*args|
+    args.each {|event|
+      if event.path =~ /\.git\//  # I guess this won't happen unless the glob is changed?
+         puts "Git repository changed, ignored."
+      else
+         puts "Event observed: #{event}"
+         cd(work_tree) do
+           `git add -A .`
+           `git commit -m "Autocommit"`
+         end
+      end
+}}
 
-t.join
+
+dw.start
+puts "Waiting for events; press enter to exit"
+STDIN.gets      # when the user hits "enter" the script will terminate
+dw.stop
